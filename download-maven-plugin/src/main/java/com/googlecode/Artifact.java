@@ -143,9 +143,9 @@ public class Artifact extends AbstractMojo {
 
 	private final Set<org.apache.maven.artifact.Artifact> artifactToCopy = new HashSet<org.apache.maven.artifact.Artifact>();
 
-	  //Injection of BuildContext for m2e-compatibility
-	  /** @component */
-	  protected BuildContext buildContext;
+	//Injection of BuildContext for m2e-compatibility
+	/** @component */
+	private BuildContext buildContext;
 
 	/**
 	 * Will download the specified artifact in the specified directory.

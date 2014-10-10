@@ -158,7 +158,7 @@ public class WGet extends AbstractMojo {
 
   //Injection of BuildContext for m2e-compatibility
   /** @component */
-  protected BuildContext buildContext;
+  private BuildContext buildContext;
 
   /**
    * Method call whent he mojo is executed for the first time.
