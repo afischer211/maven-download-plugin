@@ -38,6 +38,7 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.artifact.InvalidDependencyVersionException;
 import org.codehaus.plexus.archiver.UnArchiver;
 import org.codehaus.plexus.archiver.manager.ArchiverManager;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
 /**
  * This mojo is designed to download a maven artifact from the repository and
@@ -142,6 +143,10 @@ public class Artifact extends AbstractMojo {
 
 	private final Set<org.apache.maven.artifact.Artifact> artifactToCopy = new HashSet<org.apache.maven.artifact.Artifact>();
 
+	  //Injection of BuildContext for m2e-compatibility
+	  /** @component */
+	  protected BuildContext buildContext;
+
 	/**
 	 * Will download the specified artifact in the specified directory.
 	 *
@@ -225,6 +230,10 @@ public class Artifact extends AbstractMojo {
 					outputFile = new File(outputDirectory, this.outputFileName);
 				}
 				FileUtils.copyFile(toCopy, outputFile);
+			    if(buildContext != null)
+			    {
+			        buildContext.refresh(outputFile); // inform Eclipse-Workspace about file-modifications
+			    }
 			} catch (IOException e) {
 				getLog().debug("Error while copying file", e);
 				throw new MojoFailureException("Error copying the file : " + e.getMessage());
@@ -242,6 +251,11 @@ public class Artifact extends AbstractMojo {
 				unarchiver.setSourceFile(toUnpack);
 				unarchiver.setDestDirectory(this.outputDirectory);
 				unarchiver.extract();
+			    if(buildContext != null)
+			    {
+			        buildContext.refresh(unarchiver.getDestDirectory()); // inform Eclipse-Workspace about file-modifications
+			    }
+
 			} catch (Exception ex) {
 				throw new MojoExecutionException("Issue while unarchiving", ex);
 			}

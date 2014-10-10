@@ -1,12 +1,12 @@
 /**
  * Copyright 2009-2012 Marc-Andre Houle and Red Hat Inc
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,17 +27,19 @@ import org.codehaus.plexus.archiver.UnArchiver;
 import org.codehaus.plexus.archiver.manager.ArchiverManager;
 import org.codehaus.plexus.archiver.manager.NoSuchArchiverException;
 
+import org.sonatype.plexus.build.incremental.BuildContext;
+
 import java.io.File;
 import java.net.URL;
 import java.security.MessageDigest;
 
 /**
  * Will download a file from a web site using the standard HTTP protocol.
- * 
+ *
  * @goal wget
  * @phase process-resources
  * @requiresProject false
- * 
+ *
  * @author Marc-Andre Houle
  * @author Mickael Istria (Red Hat Inc)
  */
@@ -46,15 +48,15 @@ public class WGet extends AbstractMojo {
 
   /**
    * Represent the URL to fetch information from.
-   * 
+   *
    * @parameter expression="${download.url}"
    * @required
    */
   private String url;
-  
+
   /**
    * Flag to overwrite the file by redownloading it
-   * 
+   *
    * @parameter expression="${download.overwrite}"
    */
   private boolean overwrite;
@@ -62,14 +64,14 @@ public class WGet extends AbstractMojo {
   /**
    * Represent the file name to use as output value. If not set, will use last
    * segment of "url"
-   * 
+   *
    * @parameter expression="${download.outputFileName}"
    */
   private String outputFileName;
 
   /**
    * Represent the directory where the file should be downloaded.
-   * 
+   *
    * @parameter expression="${download.outputDirectory}"
    *            default-value="${project.build.directory}"
    * @required
@@ -79,7 +81,7 @@ public class WGet extends AbstractMojo {
   /**
    * The md5 of the file. If set, file signature will be compared to this
    * signature and plugin will fail.
-   * 
+   *
    * @parameter
    */
   private String md5;
@@ -87,35 +89,35 @@ public class WGet extends AbstractMojo {
   /**
    * The sha1 of the file. If set, file signature will be compared to this
    * signature and plugin will fail.
-   * 
+   *
    * @parameter
    */
   private String sha1;
 
   /**
    * Whether to unpack the file in case it is an archive (.zip)
-   * 
+   *
    * @parameter default-value="false"
    */
   private boolean unpack;
 
   /**
    * How many retries for a download
-   * 
+   *
    * @parameter default-value="2"
    */
   private int retries;
 
   /**
    * Read timeout for a download in milliseconds
-   * 
+   *
    * @parameter default-value="0"
    */
   private int readTimeOut;
 
   /**
    * Download file without polling cache
-   * 
+   *
    * @parameter default-value="false"
    */
   private boolean skipCache;
@@ -123,14 +125,14 @@ public class WGet extends AbstractMojo {
   /**
    * The directory to use as a cache. Default is
    * ${local-repo}/.cache/maven-download-plugin
-   * 
+   *
    * @parameter expression="${download.cache.directory}"
    */
   private File cacheDirectory;
 
   /**
    * Whether to skip execution of Mojo
-   * 
+   *
    * @parameter expression="${download.plugin.skip}" default-value="false"
    */
   private boolean skip;
@@ -142,22 +144,25 @@ public class WGet extends AbstractMojo {
 
   /**
    * To look up Archiver/UnArchiver implementation
-   * 
+   *
    * @component
    */
   private ArchiverManager archiverManager;
 
   /**
    * For transfers
-   * 
+   *
    * @component
    */
   private WagonManager wagonManager;
 
+  //Injection of BuildContext for m2e-compatibility
+  /** @component */
+  protected BuildContext buildContext;
 
   /**
    * Method call whent he mojo is executed for the first time.
-   * 
+   *
    * @throws MojoExecutionException
    *           if an error is occuring in this mojo.
    * @throws MojoFailureException
@@ -254,6 +259,13 @@ public class WGet extends AbstractMojo {
       {
         unpack(outputFile);
       }
+      else
+      {
+          if(outputFile.exists() && buildContext != null)
+          {
+              buildContext.refresh(outputFile); // inform Eclipse-Workspace about file-modifications
+          }
+      }
     }
     catch (Exception ex)
     {
@@ -268,6 +280,11 @@ public class WGet extends AbstractMojo {
     unarchiver.setDestDirectory(this.outputDirectory);
     unarchiver.extract();
     outputFile.delete();
+    if(buildContext != null)
+    {
+        buildContext.refresh(unarchiver.getDestDirectory()); // inform Eclipse-Workspace about file-modifications
+    }
+
   }
 
 
